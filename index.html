@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Vigas Estruturais - Vértice Engenharia</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Math.js -->
+    <script src="https://unpkg.com/mathjs@11.11.0/lib/browser/math.min.js"></script>
+    
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <!-- Header -->
+        <header class="text-center py-4 mb-4">
+            <h1 class="display-4 text-primary fw-bold">Vértice Engenharia</h1>
+            <h2 class="h3 text-secondary">Calculadora de Vigas Estruturais</h2>
+        </header>
+
+        <div class="row">
+            <!-- Input Section -->
+            <div class="col-lg-4 col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="card-title mb-0">Parâmetros da Viga</h3>
+                    </div>
+                    <div class="card-body">
+                        <!-- Beam Type -->
+                        <div class="mb-3">
+                            <label for="beamType" class="form-label">Tipo de Viga:</label>
+                            <select class="form-select" id="beamType">
+                                <option value="simply-supported">Simplesmente Apoiada</option>
+                                <option value="cantilever">Engastada (Cantilever)</option>
+                                <option value="fixed">Bi-engastada</option>
+                            </select>
+                        </div>
+
+                        <!-- Beam Length -->
+                        <div class="mb-3">
+                            <label for="beamLength" class="form-label">Comprimento da Viga (m):</label>
+                            <input type="number" class="form-control" id="beamLength" value="6" min="0.1" step="0.1">
+                        </div>
+
+                        <!-- Point Loads Section -->
+                        <div class="mb-4">
+                            <h5 class="text-primary">Cargas Pontuais</h5>
+                            <div id="pointLoadsContainer">
+                                <div class="point-load-item mb-2">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <input type="number" class="form-control point-load-magnitude" placeholder="Carga (kN)" step="0.1">
+                                        </div>
+                                        <div class="col-5">
+                                            <input type="number" class="form-control point-load-position" placeholder="Posição (m)" step="0.1">
+                                        </div>
+                                        <div class="col-1">
+                                            <button type="button" class="btn btn-danger btn-sm remove-point-load">×</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-success btn-sm" id="addPointLoad">+ Adicionar Carga Pontual</button>
+                        </div>
+
+                        <!-- Distributed Loads Section -->
+                        <div class="mb-4">
+                            <h5 class="text-primary">Cargas Distribuídas</h5>
+                            <div id="distributedLoadsContainer">
+                                <div class="distributed-load-item mb-2">
+                                    <div class="row mb-1">
+                                        <div class="col-6">
+                                            <input type="number" class="form-control distributed-load-start" placeholder="Início (kN/m)" step="0.1">
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="number" class="form-control distributed-load-end" placeholder="Fim (kN/m)" step="0.1">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5">
+                                            <input type="number" class="form-control distributed-load-start-pos" placeholder="Pos. Início (m)" step="0.1">
+                                        </div>
+                                        <div class="col-5">
+                                            <input type="number" class="form-control distributed-load-end-pos" placeholder="Pos. Fim (m)" step="0.1">
+                                        </div>
+                                        <div class="col-2">
+                                            <button type="button" class="btn btn-danger btn-sm remove-distributed-load">×</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-success btn-sm" id="addDistributedLoad">+ Adicionar Carga Distribuída</button>
+                        </div>
+
+                        <!-- Moments Section -->
+                        <div class="mb-4">
+                            <h5 class="text-primary">Momentos</h5>
+                            <div id="momentsContainer">
+                                <div class="moment-item mb-2">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <input type="number" class="form-control moment-magnitude" placeholder="Momento (kNm)" step="0.1">
+                                        </div>
+                                        <div class="col-5">
+                                            <input type="number" class="form-control moment-position" placeholder="Posição (m)" step="0.1">
+                                        </div>
+                                        <div class="col-1">
+                                            <button type="button" class="btn btn-danger btn-sm remove-moment">×</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-success btn-sm" id="addMoment">+ Adicionar Momento</button>
+                        </div>
+
+                        <!-- Calculate Button -->
+                        <div class="d-grid">
+                            <button type="button" class="btn btn-primary btn-lg" id="calculateButton">Calcular</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="col-lg-8 col-md-12">
+                <!-- Reactions Results -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h3 class="card-title mb-0">Reações nos Apoios</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="reactionsResults">
+                            <p class="text-muted">Clique em "Calcular" para ver as reações nos apoios.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step-by-Step Calculations -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h3 class="card-title mb-0">Cálculos Passo a Passo</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="stepByStepCalculations">
+                            <p class="text-muted">Os cálculos detalhados aparecerão aqui após o cálculo.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Diagrams Section -->
+                <div class="row">
+                    <!-- Shear Force Diagram -->
+                    <div class="col-12 mb-4">
+                        <div class="card">
+                            <div class="card-header bg-warning text-dark">
+                                <h3 class="card-title mb-0">Diagrama de Força Cortante (SFD)</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="shearForceDiagram" style="height: 400px;">
+                                    <p class="text-muted text-center mt-5">O diagrama de força cortante aparecerá aqui após o cálculo.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bending Moment Diagram -->
+                    <div class="col-12 mb-4">
+                        <div class="card">
+                            <div class="card-header bg-danger text-white">
+                                <h3 class="card-title mb-0">Diagrama de Momento Fletor (BMD)</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="bendingMomentDiagram" style="height: 400px;">
+                                    <p class="text-muted text-center mt-5">O diagrama de momento fletor aparecerá aqui após o cálculo.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="script.js"></script>
+</body>
+</html>
+
